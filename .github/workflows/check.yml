@@ -1,0 +1,88 @@
+name: Check
+on:
+  # run tests on push to main, but not when other branches are pushed to
+  push:
+    branches:
+      - main
+
+  # run tests for all pull requests
+  pull_request:
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.24.x
+        id: go
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.64
+          args: --verbose --timeout 5m
+
+      - name: Check go.mod/go.sum
+        run: |
+          echo "check if go.mod and go.sum are up to date"
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.24.x
+        id: go
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run tests
+        run: |
+          go test ./...
+
+  build:
+    strategy:
+      matrix:
+        go-version:
+          - 1.24.x
+    runs-on: ubuntu-latest
+    name: Build with Go ${{ matrix.go-version }}
+    env:
+      GOPROXY: https://proxy.golang.org
+
+    steps:
+      - name: Set up Go ${{ matrix.go-version }}
+        uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go-version }}
+        id: go
+
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build keycred
+        run: |
+          GOOS=linux   GOARCH=amd64 go build -o keycred_linux_amd64 ./cmd/keycred
+          GOOS=linux   GOARCH=arm64 go build -o keycred_linux_arm64 ./cmd/keycred
+          GOOS=windows GOARCH=amd64 go build -o keycred_windows ./cmd/keycred
+          GOOS=darwin  GOARCH=amd64 go build -o keycred_macos_amd64 ./cmd/keycred
+          GOOS=darwin  GOARCH=arm64 go build -o keycred_linux_arm64 ./cmd/keycred
+
+      - name: Build pfxtool
+        run: |
+          GOOS=linux   GOARCH=amd64 go build -o pfxtool_linux_amd64 ./cmd/pfxtool
+          GOOS=linux   GOARCH=arm64 go build -o pfxtool_linux_arm64 ./cmd/pfxtool
+          GOOS=windows GOARCH=amd64 go build -o pfxtool_windows ./cmd/pfxtool
+          GOOS=darwin  GOARCH=amd64 go build -o pfxtool_macos_amd64 ./cmd/pfxtool
+          GOOS=darwin  GOARCH=arm64 go build -o pfxtool_linux_arm64 ./cmd/pfxtool
