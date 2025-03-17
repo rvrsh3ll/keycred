@@ -574,7 +574,7 @@ func create(
 		encoder = pkcs12.Modern
 	}
 
-	pfx, err := encoder.Encode(key, cert, nil, "")
+	pfx, err := encoder.Encode(key, cert, nil, outputPass)
 	if err != nil {
 		return fmt.Errorf("build PFX: %w", err)
 	}
