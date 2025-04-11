@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/RedTeamPentesting/keycred"
+	"golang.org/x/net/proxy"
 
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
@@ -25,7 +26,8 @@ func run() error {
 		ldapOpts = &ldapauth.Options{
 			Debug: adauth.NewDebugFunc(&debug, os.Stderr, true),
 		}
-		targetUser string
+		targetUser  string
+		socksServer string
 	)
 
 	cobra.EnableCommandSorting = false
@@ -35,6 +37,18 @@ func run() error {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
+			if socksServer == "" {
+				return nil
+			}
+
+			dialer, err := proxy.SOCKS5("tcp", socksServer, nil, nil)
+			if err != nil {
+				return fmt.Errorf("create SOCKS5 proxy dialer: %w", err)
+			}
+
+			ldapOpts.LDAPDialer = dialer
+			ldapOpts.KerberosDialer = dialer
+
 			return nil
 		},
 	}
@@ -44,6 +58,7 @@ func run() error {
 	ldapOpts.RegisterFlags(flags)
 	flags.BoolVar(&debug, "debug", false, "Enable debug output")
 	flags.StringVarP(&targetUser, "target", "t", "", "Target `user` (default is the authenticating user)")
+	flags.StringVar(&socksServer, "socks", socksServer, "SOCKS5 server `address`")
 
 	var (
 		deviceID                 string
