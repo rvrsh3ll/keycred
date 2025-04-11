@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -112,7 +115,7 @@ func (keyIDEntry *KeyIDEntry) String() string {
 	return "KeyID: " + keyIDEntry.KeyID()
 }
 
-func (keyIDEntry *KeyIDEntry) Matches(material *KeyMaterialEntry) bool {
+func (keyIDEntry *KeyIDEntry) Matches(material KeyCredentialLinkEntry) bool {
 	materialID, err := NewKeyIDEntry(material, Version2)
 	if err != nil {
 		return false
@@ -130,7 +133,21 @@ func (keyIDEntry *KeyIDEntry) MatchesString(keyID string) bool {
 	return bytes.Equal(keyIDEntry.Value, rawKeyID)
 }
 
-func NewKeyIDEntry(keyMaterial *KeyMaterialEntry, _ Version) (*KeyIDEntry, error) {
+func NewKeyIDEntry(keyMaterial KeyCredentialLinkEntry, _ Version) (*KeyIDEntry, error) {
+	switch keyMaterial.(type) {
+	case *KeyMaterialEntry:
+	case *FIDOKeyMaterialEntry:
+		// According to
+		// https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-adts/a99409ea-4982-4f72-b7ef-8596013a36c7
+		// the key ID should be the SHA256 hash of the Value field of the
+		// KeyMaterial entry, which should be agnostic of the type of key
+		// material, but for FIDO keys this does not seem to match. We do it
+		// according to spec anyway, until we find out how the key ID is
+		// supposed to differ for FIDO keys.
+	default:
+		return nil, fmt.Errorf("%T is not key material", keyMaterial)
+	}
+
 	sha256Hash := sha256.New()
 	sha256Hash.Write(keyMaterial.RawValue())
 	rawKeyID := sha256Hash.Sum(nil)
@@ -236,6 +253,84 @@ func (km *KeyMaterialEntry) String() string {
 
 func (km *KeyMaterialEntry) DetailedString() string {
 	return km.String() + fmt.Sprintf(" (E=%d, N=0x%x)", km.key.E, km.key.N)
+}
+
+type FIDOKeyMaterialEntry struct {
+	*RawEntry
+	JSON struct {
+		Version     int      `json:"version"`
+		AuthData    []byte   `json:"authData"`
+		X5C         [][]byte `json:"x5c"`
+		DisplayName string   `json:"displayName"`
+	}
+	DisplayName  string
+	Certificates []*x509.Certificate
+	// This field is currently not exported because the decoding is not
+	// implemented completely. The raw binary authenticator data can be accesses
+	// through JSON.AuthData.
+	authenticatorData *fidoAuthData
+}
+
+func (fkm *FIDOKeyMaterialEntry) String() string {
+	certStrs := make([]string, 0, len(fkm.Certificates))
+
+	for _, cert := range fkm.Certificates {
+		certStrs = append(certStrs,
+			fmt.Sprintf("{Subject:%s, Issuer=%s}", cert.Subject.CommonName, cert.Issuer.CommonName))
+	}
+
+	var flags []string
+
+	if fkm.authenticatorData.Flags&fidoAuthDataFlagUserPresent > 0 {
+		flags = append(flags, "UserPresent")
+	}
+
+	if fkm.authenticatorData.Flags&fidoAuthDataFlagUserVerified > 0 {
+		flags = append(flags, "UserVerified")
+	}
+
+	if fkm.authenticatorData.Flags&fidoAuthDataFlagUserAttestedCredentialDataIncluded > 0 {
+		flags = append(flags, "AttestedCredentialDataIncluded")
+	}
+
+	if fkm.authenticatorData.Flags&fidoAuthDataFlagUserExtensionDataIncluded > 0 {
+		flags = append(flags, "ExtensionDataIncluded")
+	}
+
+	return fmt.Sprintf(
+		"FIDOKeyMaterial: Display Name: %s, RP ID Hash: %x, Flags: %s, Signature Count: %d, %s, Certificates: [%s]",
+		fkm.DisplayName, fkm.authenticatorData.RPIDHash, strings.Join(flags, "|"),
+		fkm.authenticatorData.SignCount, humanReadableAADGUI(fkm.authenticatorData.attestedCredentialData.AAGUID),
+		strings.Join(certStrs, ", "))
+}
+
+func AsFIDOKeyMaterialEntry(entry *RawEntry, _ Version) (*FIDOKeyMaterialEntry, error) {
+	kme := &FIDOKeyMaterialEntry{
+		RawEntry: entry,
+	}
+
+	err := json.Unmarshal(entry.RawValue(), &kme.JSON)
+	if err != nil {
+		return nil, fmt.Errorf("JSON parse: %w", err)
+	}
+
+	kme.DisplayName = kme.JSON.DisplayName
+
+	for i, certBytes := range kme.JSON.X5C {
+		cert, err := x509.ParseCertificate(certBytes)
+		if err != nil {
+			return nil, fmt.Errorf("parse X5C certificate at index %d: %w", i, err)
+		}
+
+		kme.Certificates = append(kme.Certificates, cert)
+	}
+
+	kme.authenticatorData, err = parseFIDOAuthData(kme.JSON.AuthData)
+	if err != nil {
+		return nil, fmt.Errorf("parse authenticator data: %w", err)
+	}
+
+	return kme, nil
 }
 
 func NewKeyMaterialEntry(key *rsa.PublicKey, derFormatted bool, _ Version) (*KeyMaterialEntry, error) {

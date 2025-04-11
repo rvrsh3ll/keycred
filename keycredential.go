@@ -166,6 +166,11 @@ func (kcl *KeyCredentialLink) parseEntry(rawEntry *RawEntry) (KeyCredentialLinkE
 	case TypeKeyHash:
 		return AsKeyHashEntry(rawEntry, kcl.Version)
 	case TypeKeyMaterial:
+		rawValue := rawEntry.RawValue()
+		if len(rawValue) > 0 && rawValue[0] == '{' {
+			return AsFIDOKeyMaterialEntry(rawEntry, kcl.Version)
+		}
+
 		return AsKeyMaterialEntry(rawEntry, kcl.Version)
 	case TypeKeyUsage:
 		return AsKeyUsageEntry(rawEntry, kcl.Version)
@@ -263,11 +268,13 @@ func (kcl *KeyCredentialLink) validate(strict bool) error {
 				validationErrors = append(validationErrors, fmt.Errorf("invalid KeyHash at index %d", i))
 			}
 		case *KeyIDEntry:
-			material, ok := kcl.Get(TypeKeyMaterial).(*KeyMaterialEntry)
-			if !ok {
+			switch km := kcl.Get(TypeKeyMaterial).(type) {
+			case *KeyMaterialEntry, *FIDOKeyMaterialEntry:
+				if !e.Matches(km) {
+					validationErrors = append(validationErrors, fmt.Errorf("key ID does not match key material"))
+				}
+			default:
 				validationErrors = append(validationErrors, fmt.Errorf("cannot find key material to verify key ID"))
-			} else if !e.Matches(material) {
-				validationErrors = append(validationErrors, fmt.Errorf("key ID does not match key material"))
 			}
 		}
 	}
