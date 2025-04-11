@@ -68,22 +68,23 @@ Available Commands:
   completion  Generate the autocompletion script for the specified shell
 
 Flags:
-      --aes-key string        Kerberos AES key
-      --ccache string         Kerberos CCache file name (defaults to $KRB5CCNAME, currently unset)
+      --aes-key hex key       Kerberos AES hex key
+      --ccache file           Kerberos CCache file name (defaults to $KRB5CCNAME, currently unset)
       --dc string             Domain controller
       --debug                 Enable debug output
   -h, --help                  help for keycred
   -k, --kerberos              Use Kerberos authentication
-  -H, --nt-hash string        NT hash
+  -H, --nt-hash hash          NT hash ('NT', ':NT' or 'LM:NT')
   -p, --password string       Password
-      --pfx string            Client certificate and private key in PFX format
+      --pfx file              Client certificate and private key as PFX file
       --pfx-password string   Password for PFX file
       --scheme string         Scheme (ldap or ldaps) (default "ldaps")
       --simple-bind           Authenticate with simple bind
+      --socks address         SOCKS5 server address
       --start-tls             Negotiate StartTLS before authenticating on regular LDAP connection
-  -t, --target string         Target user (default is the authenticating user)
+  -t, --target user           Target user (default is the authenticating user)
       --timeout duration      LDAP connection timeout (default 5s)
-  -u, --user user@domain      Username (user@domain, 'domain\user', 'domain/user' or 'user')
+  -u, --user user@domain      Username ('user@domain', 'domain\user', 'domain/user' or 'user')
       --verify                Verify LDAP TLS certificate
 
 Use "keycred [command] --help" for more information about a command.
