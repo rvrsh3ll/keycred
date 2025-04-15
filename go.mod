@@ -3,7 +3,7 @@ module github.com/RedTeamPentesting/keycred
 go 1.23.3
 
 require (
-	github.com/RedTeamPentesting/adauth v0.2.1
+	github.com/RedTeamPentesting/adauth v0.2.2
 	github.com/go-ldap/ldap/v3 v3.4.11
 	github.com/google/uuid v1.6.0
 	github.com/spf13/cobra v1.9.1
