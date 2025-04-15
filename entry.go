@@ -589,7 +589,7 @@ func (lastLogon *KeyApproximateLastLogonTimeStampEntry) Time() time.Time {
 }
 
 func (lastLogon *KeyApproximateLastLogonTimeStampEntry) String() string {
-	return "KeyApproximateLastLogonTimeStamp: " + lastLogon.time.String()
+	return "KeyApproximateLastLogonTimeStamp: " + lastLogon.time.Format("2006-01-02 15:04:05 MST")
 }
 
 func NewKeyApproximateLastLogonTimeStampEntry(t time.Time) *KeyApproximateLastLogonTimeStampEntry {
@@ -630,7 +630,7 @@ func (creationTime *KeyCreationTimeEntry) Time() time.Time {
 }
 
 func (creationTime *KeyCreationTimeEntry) String() string {
-	return "KeyCreationTime: " + creationTime.time.String()
+	return "KeyCreationTime: " + creationTime.time.Format("2006-01-02 15:04:05 MST")
 }
 
 func NewKeyCreationTimeEntry(t time.Time) *KeyCreationTimeEntry {
