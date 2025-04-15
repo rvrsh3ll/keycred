@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	"github.com/RedTeamPentesting/keycred"
-	"golang.org/x/net/proxy"
 
 	"github.com/google/uuid"
 	"github.com/spf13/cobra"
@@ -27,7 +26,7 @@ func run() error {
 			Debug: adauth.NewDebugFunc(&debug, os.Stderr, true),
 		}
 		targetUser  string
-		socksServer string
+		socksServer = os.Getenv("SOCKS5_SERVER")
 	)
 
 	cobra.EnableCommandSorting = false
@@ -37,17 +36,7 @@ func run() error {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
-			if socksServer == "" {
-				return nil
-			}
-
-			dialer, err := proxy.SOCKS5("tcp", socksServer, nil, nil)
-			if err != nil {
-				return fmt.Errorf("create SOCKS5 proxy dialer: %w", err)
-			}
-
-			ldapOpts.LDAPDialer = dialer
-			ldapOpts.KerberosDialer = dialer
+			ldapOpts.SetDialer(adauth.DialerWithSOCKS5ProxyIfSet(socksServer, nil))
 
 			return nil
 		},

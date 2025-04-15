@@ -3,18 +3,17 @@ module github.com/RedTeamPentesting/keycred
 go 1.23.3
 
 require (
-	github.com/RedTeamPentesting/adauth v0.2.0
-	github.com/go-ldap/ldap/v3 v3.4.11-0.20250110131057-5d1b644709df
+	github.com/RedTeamPentesting/adauth v0.2.1
+	github.com/go-ldap/ldap/v3 v3.4.11
 	github.com/google/uuid v1.6.0
 	github.com/spf13/cobra v1.9.1
-	golang.org/x/net v0.39.0
 	software.sslmate.com/src/go-pkcs12 v0.5.0
 )
 
 require (
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 // indirect
 	github.com/geoffgarside/ber v1.1.0 // indirect
-	github.com/go-asn1-ber/asn1-ber v1.5.7 // indirect
+	github.com/go-asn1-ber/asn1-ber v1.5.8-0.20250403174932-29230038a667 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/indece-official/go-ebcdic v1.2.0 // indirect
@@ -33,6 +32,7 @@ require (
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/vadimi/go-ntlm v1.2.1 // indirect
 	golang.org/x/crypto v0.37.0 // indirect
+	golang.org/x/net v0.39.0 // indirect
 	golang.org/x/sys v0.32.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
 )
