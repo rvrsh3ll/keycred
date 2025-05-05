@@ -3,7 +3,7 @@ module github.com/RedTeamPentesting/keycred
 go 1.23.3
 
 require (
-	github.com/RedTeamPentesting/adauth v0.2.2
+	github.com/RedTeamPentesting/adauth v0.3.0
 	github.com/go-ldap/ldap/v3 v3.4.11
 	github.com/google/uuid v1.6.0
 	github.com/spf13/cobra v1.9.1
@@ -33,6 +33,6 @@ require (
 	github.com/vadimi/go-ntlm v1.2.1 // indirect
 	golang.org/x/crypto v0.37.0 // indirect
 	golang.org/x/net v0.39.0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
 )
