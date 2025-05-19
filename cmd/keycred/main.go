@@ -260,10 +260,13 @@ func run() error {
 				return err
 			}
 
+			dc.UseKerberos = true
+
 			conn, err := ldapauth.ConnectTo(cmd.Context(), creds, dc, ldapOpts)
 			if err != nil {
 				return fmt.Errorf("LDAP connect: %w", err)
 			}
+
 			defer conn.Close() //nolint:errcheck
 
 			err = removeKeyCredential(conn, creds.UPN(), "", "", &creds.ClientCertKey.PublicKey)

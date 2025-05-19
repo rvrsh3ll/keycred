@@ -57,6 +57,8 @@ func authenticate(ctx context.Context, creds *adauth.Credential) error {
 		return fmt.Errorf("write CCache: %w", err)
 	}
 
+	creds.CCache = ccacheFile
+
 	fmt.Println("Ticket saved in", ccacheFile)
 
 	return nil
