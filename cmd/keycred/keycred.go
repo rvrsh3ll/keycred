@@ -34,8 +34,13 @@ func authenticate(ctx context.Context, creds *adauth.Credential) error {
 		return fmt.Errorf("configure Kerberos: %w", err)
 	}
 
+	rsaKey, ok := creds.ClientCertKey.(*rsa.PrivateKey)
+	if !ok {
+		return fmt.Errorf("cannot use %T because PKINIT requires an RSA key", creds.ClientCertKey)
+	}
+
 	ccache, hash, err := pkinit.UnPACTheHash(
-		ctx, creds.Username, creds.Domain, creds.ClientCert, creds.ClientCertKey, krbConf)
+		ctx, creds.Username, creds.Domain, creds.ClientCert, rsaKey, krbConf)
 	if err != nil {
 		return fmt.Errorf("UnPAC-the-Hash: %w", err)
 	}

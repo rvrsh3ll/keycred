@@ -1,5 +1,6 @@
+version: "2"
 linters:
-  disable-all: true
+  default: none
   enable:
     - asasalint
     - asciicheck
@@ -25,12 +26,9 @@ linters:
     - gocyclo
     - godot
     - godox
-    - gofmt
     - goheader
-    - goimports
     - gomodguard
     - goprintffuncname
-    - gosimple
     - gosmopolitan
     - govet
     - grouper
@@ -62,7 +60,6 @@ linters:
     - sqlclosecheck
     - staticcheck
     - tagalign
-    - usetesting
     - testableexamples
     - testifylint
     - thelper
@@ -71,30 +68,43 @@ linters:
     - unparam
     - unused
     - usestdlibvars
+    - usetesting
     - wastedassign
     - whitespace
     - wsl
     - zerologlint
-linters-settings:
-  godox:
-    keywords:
-      - FIXME # FIXME generates a linter warning
-  goconst:
-    min-occurrences: 5
-  cyclop:
-    # calm down a bit
-    max-complexity: 20
-  tagliatelle:
-    # check the struck tag name case
-    case:
-      rules:
-        json: snake
-        yaml: snake
-  exhaustive:
-    default-signifies-exhaustive: true
-  gosec:
-    excludes:
-      - G304 # command execution
-      - G204 # file inclusion
-issues:
-  exclude-use-default: false
+  settings:
+    cyclop:
+      max-complexity: 20
+    exhaustive:
+      default-signifies-exhaustive: true
+    goconst:
+      min-occurrences: 5
+    godox:
+      keywords:
+        - FIXME
+    gosec:
+      excludes:
+        - G304  # command execution
+        - G204  # file inlusion
+    tagliatelle:
+      case:
+        rules:
+          json: snake
+          yaml: snake
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
