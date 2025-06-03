@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/rsa"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -255,18 +256,26 @@ func run() error {
 				return fmt.Errorf("find DC: %w", err)
 			}
 
+			rsaKey, ok := creds.ClientCertKey.(*rsa.PrivateKey)
+			if !ok {
+				return fmt.Errorf("cannot use %T because PKINIT requires an RSA key", creds.ClientCertKey)
+			}
+
 			err = authenticate(cmd.Context(), creds)
 			if err != nil {
 				return err
 			}
 
+			dc.UseKerberos = true
+
 			conn, err := ldapauth.ConnectTo(cmd.Context(), creds, dc, ldapOpts)
 			if err != nil {
 				return fmt.Errorf("LDAP connect: %w", err)
 			}
+
 			defer conn.Close() //nolint:errcheck
 
-			err = removeKeyCredential(conn, creds.UPN(), "", "", &creds.ClientCertKey.PublicKey)
+			err = removeKeyCredential(conn, creds.UPN(), "", "", &rsaKey.PublicKey)
 			if err != nil {
 				return fmt.Errorf("remove KeyCredentialLink: %w", err)
 			}
